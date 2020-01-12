@@ -12,16 +12,22 @@ import ubinascii
 import esp
 import json
 import urequests
+# from dht11 import Dht11
 
 esp.osdebug(None)
 gc.collect()
+
+JSON_HEADERS = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
 # Init Pins--------------------
 led = Pin(5, Pin.OUT)
 sensorPower = Pin(33, Pin.OUT)
 sensorPower.value(1)
+# dht = Dht11(22)
 adc = machine.ADC(machine.Pin(32))
 adc.atten(adc.ATTN_11DB)
+adc.width(adc.WIDTH_12BIT)
+sleep(2)
 # -----------------------------
 
 # Init config------------------
@@ -29,9 +35,14 @@ with open('config.json') as config_file:
 	config = json.load(config_file)
 # -----------------------------
 
-sleep(1)
+# while not dht.getMeasure():
+#     sleep(5)
+#     if dht.getMeasure():
+#         break
 
-led.value(0)
+# sleep(1)
+
+# led.value(0)
 
 # Init WiFi--------------------
 ssid = config['WIFI_SSID']
@@ -50,7 +61,7 @@ while station.isconnected() == False:
     sleep(1)
 
 print('Connection successful')
-led.value(1)
+# led.value(1)
 print(station.ifconfig())
 mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
 print(mac)
@@ -63,18 +74,26 @@ moisture = str(adc.read())
 # ------------------------------
 
 # Prepare and send data to server------------------------------
-my_string = "{{ \"time\": {},  \"moisture\": {}, \"desc\": \"prototype_0\" }}"
-outputStr = my_string.format(timeMeasure, moisture)
-print(outputStr)
+# my_string = "{{ \"time\": {},  \"moisture\": {},   \"temp\": {}, \"hum\": {}, \"desc\": \"Outside\" }}"
+# outputStr = my_string.format(timeMeasure, moisture, dht.temperature, dht.humidity)
+# my_string = "{{ \"time\": {},  \"moisture\": {}, \"desc\": \"Small lemon\" }}"
+# outputStr = my_string.format(timeMeasure, moisture)
+data = {}
+data["UUID"] = config["UUID"]
+data["moisture"] = moisture
+# print(outputStr)
+# print(config['API_ENDPOINT'])
 try:
-    response = urequests.post(config['IP_ENDPOINT'],
-                              data=outputStr)
+    response = urequests.post(config['API_ENDPOINT'],
+                              data=json.dumps(data), headers=JSON_HEADERS)
     print(response.text)
 except:
     print('connection error')
 # -------------------------------------------------------------
 
 # Sleep-----------------------
-sensorPower.value(0)
-machine.deepsleep(120000*60)
+# sensorPower.value(0)
+sleep_time = config["INTERVAL"]*1000*60
+print(sleep_time)
+machine.deepsleep(sleep_time)
 # ----------------------------
