@@ -38,3 +38,11 @@ class Dht11:
     def initDHT(self):
         self.dhtSensor = DHT11(self.dhtPin)
         self.dhtSensor.measure()
+
+# sample usage
+# while not dht.getMeasure():
+#     sleep(5)
+#     if dht.getMeasure():
+#         break
+
+# sleep(1)

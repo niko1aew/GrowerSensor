@@ -1,0 +1,63 @@
+.settings-form {
+  display: none;
+}
+
+.error {
+  display: none;
+  border: 1px solid;
+  border-radius: 10px;
+  margin: 10px 0px;
+  padding: 15px 10px 15px 50px;
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  color: #d8000c;
+  background-color: #ffbaba;
+  background-image: url('../img/error.png');
+}
+
+.spinner {
+  display: none;
+  font-size: x-large;
+}
+
+.loader,
+.loader:after {
+  border-radius: 50%;
+  width: 10em;
+  height: 10em;
+}
+.loader {
+  margin: 60px auto;
+  font-size: 15px;
+  position: relative;
+  text-indent: -9999em;
+  border-top: 1.1em solid rgba(255, 255, 255, 0.7);
+  border-right: 1.1em solid rgba(255, 255, 255, 0.7);
+  border-bottom: 1.1em solid rgba(255, 255, 255, 0.7);
+  border-left: 1.1em solid #435dcf;
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-animation: load8 1.1s infinite linear;
+  animation: load8 1.1s infinite linear;
+}
+@-webkit-keyframes load8 {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@keyframes load8 {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}

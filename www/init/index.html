@@ -1,75 +1,152 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Document</title>
     <script>
-        // JavaScript for disabling form submissions if there are invalid fields
-        (function() {
-          'use strict';
-          window.addEventListener('load', function() {
+      // JavaScript for disabling form submissions if there are invalid fields
+      (function () {
+        'use strict';
+        window.addEventListener(
+          'load',
+          function () {
+            // document.getElementsByClassName("settings-form").style.display = "none";
+            // document.getElementsByClassName("settings-form").style.display = "block";
             // Fetch all the forms we want to apply custom Bootstrap validation styles to
             var forms = document.getElementsByClassName('needs-validation');
+            var errorBlock = document.getElementsByClassName('error')[0];
+            var spinnerBlock = document.getElementsByClassName('spinner')[0];
+
+            spinnerBlock.style.display = 'block';
+            fetch('http://192.168.4.1/get_config')
+              .then((response) => response.json())
+              .then((data) => {
+                spinnerBlock.style.display = 'none';
+                console.log(data);
+              })
+              .catch((error) => {
+                spinnerBlock.style.display = 'none';
+                errorBlock.innerHTML = 'Внутренняя ошибка. Попробуйте перезагрузить устройсто.';
+                errorBlock.style.display = 'block';
+                console.error('Error:', error);
+              });
             // Loop over them and prevent submission
-            var validation = Array.prototype.filter.call(forms, function(form) {
-              form.addEventListener('submit', function(event) {
-                if (form.checkValidity() === false) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-              }, false);
+            var validation = Array.prototype.filter.call(forms, function (
+              form
+            ) {
+              form.addEventListener(
+                'submit',
+                function (event) {
+                  if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }
+                  form.classList.add('was-validated');
+                },
+                false
+              );
             });
-          }, false);
-        })();
-        </script>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-</head>
+          },
+          false
+        );
+      })();
+    </script>
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+  </head>
 
-<body>
-
+  <body>
     <div class="fixed-bg">
-        <div class="container">
-            <div class=" jumbotron text-center">
-                <h2 class="display-4">Привязка датчика</h2>
-                <hr class="my-4">
-                <div class="text-left" style="font-size: 20px;">
-                    <form class="needs-validation" action="http://192.168.4.1/init_settings" method="POST" role="form">
-                        <div class="form-group">
-                            <label for="validationCustom01">Адрес сервера</label>
-                            <input type="text" name="serverUrl" value="http://192.168.1.115:8000/" id="validationCustom01"  class="form-control" required pattern="(http|https):\/\/.+?(?=\/)\/">
-                            <small class="form-text text-muted">Укажите верный адрес сервера, например http://flowers.nikolaev.best/</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Код активации</label>
-                            <input name="code" placeholder="Пример: 1234" class="form-control" onkeypress='return event.charCode >= 48 && event.charCode <= 57' required maxlength="4">
-                            <small class="form-text text-muted">Для получения кода необходимо предварительно создать цветок здесь flowers.nikolaev.best</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Имя сети WiFi</label>
-                            <input name="ssid" value="ROSTELECOM_2E91" class="form-control" required>
-                            <small class="form-text text-muted">Необходимо для подключения датчика к Интернет</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Пароль сети WiFi</label>
-                            <input name="password" value=":U*_qd/'[Ov%6K2D0,1B" type="password" class="form-control" required>
-                            <small class="form-text text-muted">Сохраняется только внутри дачтика</small>
-                        </div>
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-primary btn-lg">Сохранить</button>
-                        </div>
-                    </form>
-                    
-                </div>
-            </div>
+      <div class="container">
+        <div class="jumbotron text-center">
+          <h2 class="display-4">Привязка датчика</h2>
+          <hr class="my-4" />
+          <div class="spinner">
+            <div class="loader"></div>
+            <div>Загрузка...</div>
+          </div>
+          
+          <div class="error"></div>
+          <div class="text-left settings-form" style="font-size: 20px;">
+            <form
+              class="needs-validation"
+              action="http://192.168.4.1/init_settings"
+              method="POST"
+              role="form"
+            >
+              <div class="form-group">
+                <label for="validationCustom01">Адрес сервера</label>
+                <input
+                  type="text"
+                  name="serverUrl"
+                  value="http://192.168.1.115:8000/"
+                  id="validationCustom01"
+                  class="form-control"
+                  required
+                  pattern="(http|https):\/\/.+?(?=\/)\/"
+                />
+                <small class="form-text text-muted"
+                  >Укажите верный адрес сервера, например
+                  http://flowers.nikolaev.best/</small
+                >
+              </div>
+              <div class="form-group">
+                <label>Код активации</label>
+                <input
+                  name="code"
+                  placeholder="Пример: 1234"
+                  class="form-control"
+                  onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                  required
+                  maxlength="4"
+                />
+                <small class="form-text text-muted"
+                  >Для получения кода необходимо предварительно создать цветок
+                  здесь flowers.nikolaev.best</small
+                >
+              </div>
+              <div class="form-group">
+                <label>Имя сети WiFi</label>
+                <input
+                  name="ssid"
+                  value="ROSTELECOM_2E91"
+                  class="form-control"
+                  required
+                />
+                <small class="form-text text-muted"
+                  >Необходимо для подключения датчика к Интернет</small
+                >
+              </div>
+              <div class="form-group">
+                <label>Пароль сети WiFi</label>
+                <input
+                  name="password"
+                  value=":U*_qd/'[Ov%6K2D0,1B"
+                  type="password"
+                  class="form-control"
+                  required
+                />
+                <small class="form-text text-muted"
+                  >Сохраняется только внутри датчика</small
+                >
+              </div>
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  Сохранить
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      </div>
     </div>
-</body>
-
+  </body>
 </html>

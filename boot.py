@@ -7,8 +7,8 @@ import machine
 from machine import Pin
 from time import sleep
 from time import time
-import network
-import ubinascii
+import wifi
+import machine
 import esp
 import json
 import urequests
@@ -19,11 +19,35 @@ DEBUG = True
 
 SENSOR_PWR_PIN = 23
 SENSOR_SIGNAL_PIN = 34
+CONFIG_SW = 12
 
 esp.osdebug(None)
 gc.collect()
 
 JSON_HEADERS = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+
+
+# Save config-----------------
+def save_config(data):
+    with open('config.json', 'w') as f:
+            json.dump(data, f,)
+
+# Init Pins--------------------
+config_switch = machine.Pin(12, machine.Pin.IN, machine.Pin.PULL_UP)
+led = Pin(5, Pin.OUT)
+sensor_power = Pin(SENSOR_PWR_PIN, Pin.OUT)
+sensor_power.value(1)
+# dht = Dht11(22)
+adc = machine.ADC(machine.Pin(SENSOR_SIGNAL_PIN))
+adc.atten(adc.ATTN_11DB)
+adc.width(adc.WIDTH_12BIT)
+sleep(2)
+# -----------------------------
+if config_switch.value() is 0:
+    print("Run config...")
+    wifi.start_wifi_server()
+    server.start_server_init()
 
 # Init config------------------
 try:
@@ -32,67 +56,13 @@ try:
 except:
     if DEBUG:
         print("No configuration. Starting config server...")
-    ap = network.WLAN(network.AP_IF)
-    ap.active(True)
-    ap.config(essid='FlowerSensor')
-    ap.config(password='flower')
+    wifi.start_wifi_server()
     server.start_server_init()
 # -----------------------------
 
-# Save config-----------------
-def save_config(data):
-    with open('config.json', 'w') as f:
-            json.dump(data, f,)
-
-# Init Pins--------------------
-led = Pin(5, Pin.OUT)
-sensorPower = Pin(SENSOR_PWR_PIN, Pin.OUT)
-sensorPower.value(1)
-# dht = Dht11(22)
-adc = machine.ADC(machine.Pin(SENSOR_SIGNAL_PIN))
-adc.atten(adc.ATTN_11DB)
-adc.width(adc.WIDTH_12BIT)
-sleep(2)
-# -----------------------------
-
-
-
-# while not dht.getMeasure():
-#     sleep(5)
-#     if dht.getMeasure():
-#         break
-
-# sleep(1)
-
 led.value(0)
-
-# Init WiFi--------------------
-ssid = config['WIFI_SSID']
-password = config['WIFI_PASS']
-station = network.WLAN(network.STA_IF)
-station.active(True)
-station.connect(ssid, password)
-
-attemptCount = 0
-
-while station.isconnected() == False:
-    attemptCount+=1
-    if attemptCount==30:
-        if DEBUG:
-            print('connection fail')
-        machine.deepsleep(60000*60)
-    sleep(1)
-
-
-
+wifi.start_wifi_client(config['WIFI_SSID'], config['WIFI_PASS'])
 led.value(1)
-
-mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
-
-if DEBUG:
-    print('Connection successful')
-    print(station.ifconfig())
-    print(mac)
 
 # ------------------------------
 if 'ACTIVATION_CODE' in config:
@@ -104,9 +74,24 @@ if 'ACTIVATION_CODE' in config:
         print(url)
     
     data = {"ACTIVATION_CODE": config["ACTIVATION_CODE"]}
-    r = urequests.post(url, data=json.dumps(data), headers=JSON_HEADERS)
-    response = r.json()
 
+    try:
+        r = urequests.post(url, data=json.dumps(data), headers=JSON_HEADERS)
+    except:
+        print("Failed to post data to server")
+        sleep(10)
+        machine.reset()
+    print(r)
+    response = r.json()
+    print(dir(response))
+    result_success = response["SUCCESS"]
+
+    if not result_success:
+        print(response["MSG"])
+        sleep(10)
+        machine.reset()
+    
+    
     if DEBUG:
         print("Received UUID: %s" % response["UUID"])
         print("Received INTERVAL: %s" % response["INTERVAL"])
@@ -155,7 +140,7 @@ except:
 # -------------------------------------------------------------
 
 # Sleep-----------------------
-sensorPower.value(0)
+sensor_power.value(0)
 sleep_time = config["INTERVAL"]*1000*60
 # print(sleep_time)
 # sleep(30)

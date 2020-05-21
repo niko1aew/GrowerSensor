@@ -18,6 +18,21 @@ def _httpHandlerInitSettingsGet(httpClient, httpResponse):
                                  contentCharset="UTF-8",
                                  content=page)
 
+@MicroWebSrv.route('/get_config')
+def _httpHandlerInitSettingsGet(httpClient, httpResponse):
+    try:
+        with open('config.json') as config_file:
+            config = json.load(config_file)
+    except:
+        print("no or bad config file")
+
+    print("Config: ", config)
+
+    httpResponse.WriteResponseOk(headers=None,
+                                 contentType="application/json",
+                                 contentCharset="UTF-8",
+                                 content=config)
+
 @MicroWebSrv.route('/init_settings', 'POST')
 def _httpHandlerInitSettingsPost(httpClient, httpResponse):
     formData = httpClient.ReadRequestPostedFormData()
