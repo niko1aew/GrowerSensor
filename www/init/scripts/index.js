@@ -7,7 +7,7 @@ window.addEventListener('load', function () {
     codeInput = document.getElementById('codeInput'),
     ssidInput = document.getElementById('ssidInput'),
     passwordInput = document.getElementById('passwordInput');
-    intervalInput = document.getElementById('intervalInput');
+    // intervalInput = document.getElementById('intervalInput');
 
   spinnerBlock.style.display = 'block';
 
@@ -19,9 +19,9 @@ window.addEventListener('load', function () {
         settingsBlock.style.display = 'block';
       } else if (data && data.STATUS === 'OK') {
         serverInput.value = data.SERVER_ADDRESS;
-        codeInput.value = data.ACTIVATION_CODE;
+        codeInput.value = data.ACTIVATION_CODE ?? '';
         ssidInput.value = data.WIFI_SSID;
-        intervalInput.value = data.INTERVAL;
+        // intervalInput.value = data.INTERVAL;
         passwordInput.value = data.WIFI_PASS;
         settingsBlock.style.display = 'block';
       }
