@@ -5,7 +5,7 @@ import machine
 def start_server_init():
     """Run server for device configuration"""
     print('Starting init server...')
-    srv = MicroWebSrv(webPath='/www/')
+    srv = MicroWebSrv(webPath='/www/init')
     srv.Start(threaded=False)
 
 @MicroWebSrv.route('/init_settings')
