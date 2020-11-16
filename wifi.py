@@ -4,8 +4,6 @@ import machine
 import ubinascii
 from time import sleep
 
-DEBUG = True
-
 def start_wifi_server():
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
@@ -24,12 +22,13 @@ def start_wifi_client(ssid, pwd):
     while station.isconnected() == False:
         attemptCount+=1
         if attemptCount==30:
-            if DEBUG:
-                print('connection fail')
-            machine.deepsleep(60000*60)
+            print('Wifi connection fail')
+            return False
     
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
-    if DEBUG:
-        print('Connection successful')
-        print(station.ifconfig())
-        print(mac)
+    
+    print('Connection successful')
+    print(station.ifconfig())
+    print(mac)
+
+    return True

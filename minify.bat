@@ -1,0 +1,1 @@
+pyminify boot.py > boot_min.py

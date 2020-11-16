@@ -15,8 +15,6 @@ import urequests
 import server
 import os
 
-DEBUG = True
-
 # SENSOR_PWR_PIN = 23
 SENSOR_PWR_PIN = 33
 SENSOR_SIGNAL_PIN = 32
@@ -32,119 +30,166 @@ def set_error(error_text):
     sleep(10)
     machine.reset()
 
-# Save config-----------------
 def save_config(data):
     with open('config.json', 'w') as f:
             json.dump(data, f,)
 
-# Init Pins--------------------
-try:
-    config_switch = machine.Pin(CONFIG_SW, machine.Pin.IN, machine.Pin.PULL_UP)
-    led = Pin(5, Pin.OUT)
-    sensor_power = Pin(SENSOR_PWR_PIN, Pin.OUT)
-    sensor_power.value(1)
-    adc = machine.ADC(machine.Pin(SENSOR_SIGNAL_PIN))
-    adc.atten(adc.ATTN_11DB)
-    adc.width(adc.WIDTH_12BIT)
-    sleep(2)
-except:
-    set_error("Failed to init pins")
-# -----------------------------
-
-if config_switch.value() is 0:
+def run_config_server():
     print("Run config...")
     wifi.start_wifi_server()
     server.start_server_init()
 
-# Init config------------------
-try:
-    with open('config.json') as config_file:
-        config = json.load(config_file)
-except:
-    if DEBUG:
-        print("No configuration. Starting config server...")
-    wifi.start_wifi_server()
-    server.start_server_init()
-# -----------------------------
+def init_pins():
+    try:
+        config_switch = machine.Pin(CONFIG_SW, machine.Pin.IN, machine.Pin.PULL_UP)
+        led = Pin(5, Pin.OUT)
+        sensor_power = Pin(SENSOR_PWR_PIN, Pin.OUT)
+        sensor_power.value(1)
+        adc = machine.ADC(machine.Pin(SENSOR_SIGNAL_PIN))
+        adc.atten(adc.ATTN_11DB)
+        adc.width(adc.WIDTH_12BIT)
+        sleep(2)
 
-led.value(0)
-wifi.start_wifi_client(config['WIFI_SSID'], config['WIFI_PASS'])
-led.value(1)
+        return config_switch, led, sensor_power, adc
+    except:
+        set_error("Failed to init pins")
 
-# ------------------------------
-if 'ACTIVATION_CODE' in config:
-    
-    url = config["SERVER_ADDRESS"] + "activate/"
+def init_config():
+    try:
+        with open('config.json') as config_file:
+            return json.load(config_file)
+    except:
+        print("Failed to load config...")
+        return False
 
-    if DEBUG:
-        print("Sending %s to server..." % config['ACTIVATION_CODE'])
-        print(url)
-    
-    data = {
-        "ACTIVATION_CODE": config["ACTIVATION_CODE"]}
-        # "INTERVAL": config["INTERVAL"]}
+def start_wifi(config, led):
+    led.value(0)
+    print("Starting wifi...")
+    result = wifi.start_wifi_client(config['WIFI_SSID'], config['WIFI_PASS'])
+    if result:
+        led.value(1)
+    return result
+
+def get_config_from_server(config):
+    url = config["SERVER_ADDRESS"] + "flowers/getsensorconfig?activationCode=" + config['ACTIVATION_CODE']
+
+    print("Requesting configuration...")
+    print(url)
 
     try:
-        r = urequests.post(url, data=json.dumps(data), headers=JSON_HEADERS)
-        print(r)
-        response = r.json()
-        print(dir(response))
-        result_success = response["SUCCESS"]
-        if not result_success:
-            print(response["MSG"])
-            sleep(10)
-            machine.reset()
-        if DEBUG:
-            print("Received UUID: %s" % response["UUID"])
-            # print("Received INTERVAL: %s" % response["INTERVAL"])
-        config['UUID'] = response["UUID"]
-            # config['INTERVAL'] = response["INTERVAL"]
-        del config['ACTIVATION_CODE'] #Удалять, только если сервер ответил ОК
-        save_config(config)
-        url = config["SERVER_ADDRESS"] + "confirm-activation/"
-        if DEBUG:
-            print("Confirming activation on device")
-            print(url)
-        data = {"UUID": config["UUID"]}
-        r = urequests.post(url, data=json.dumps(data), headers=JSON_HEADERS)
+        config_response = urequests.get(url)
 
-        if DEBUG:
-            print("Server answer for activation confirm:")
-            print(r.status_code)
+        if config_response.status_code == 200:
+            config_payload = config_response.json()
+            uuid = config_payload["uuid"]
+            interval = config_payload["interval"]
+            print("Received UUID: %s" % uuid)
+            print("Received interval: %s" % interval)
+            config['UUID'] = uuid
+            config['INTERVAL'] = interval
+            return config
+        else:
+            print("Configuration request failed: %s" % config_response.status_code)
+            return False
+    except Exception as err:
+        print("Configuration request error: {0}".format(err))
+        return False
+
+def process_activation(config):
+    url = config["SERVER_ADDRESS"] + "flowers/activateflower?activationCode="+config["ACTIVATION_CODE"]
+
+    print("Performing activation...")
+    print(url)
+    activation_response = urequests.get(url)
+
+    if activation_response.status_code == 200:
+        del config['ACTIVATION_CODE']
+        print("Flower activation success")
+        return config
+    else:
+        dir(activation_response)
+        print("Activation request failed: %s" % activation_response.status_code)
+        return False
+
+def get_measure(adc):
+    try:
+        sleep(5)
+        return str(adc.read())
+    except Exception as err:
+        print("Measure error: {0}".format(err))
+        return False
+
+def send_measure(data):
+    url = config["SERVER_ADDRESS"] + "flowers/registermeasure"
+    try:
+        response = urequests.post(url, data=json.dumps(data), headers=JSON_HEADERS)
+        if response.status_code == 200:
+            response_data = json.loads(response.text)
+            print(response_data)
+            return response_data
     except:
-        set_error("Failed to post data to server")
+        return False
+        
+def go_to_sleep(sleep_time, sensor_power):
+    try:
+        sensor_power.value(0)
+        print("Deep sleep ({0}) in 5 sec", sleep_time)
+        sleep(5)
+        machine.deepsleep(sleep_time)
+        return True
+    except:
+        return False
 
-# Measure-----------------------
-try:
-    sleep(5)
-    timeMeasure = str(time())
-    moisture = str(adc.read())
-except:
-    set_error("Failed to read data from sensor")
-# ------------------------------
-
-data = { "UUID": config["UUID"], "moisture": moisture }
-
-if DEBUG:
-    print("Sending data to:", config['SERVER_ADDRESS'])
-    print("Data:", data)
-try:
-    response = urequests.post(config['SERVER_ADDRESS']+"send/",
-                              data=json.dumps(data), headers=JSON_HEADERS)
-    response_data = json.loads(response.text)
-    print(response_data)
-except:
-    set_error("Failed to send data")
 # -------------------------------------------------------------
+pins = init_pins()
 
-# Sleep-----------------------
-try:
-    sensor_power.value(0)
-    print(response_data["sleep_interval"])
-    sleep_time = response_data["sleep_interval"]*1000*60
-    print("Deep sleep ({0}) in 5 sec", sleep_time)
-    sleep(5)
-    machine.deepsleep(sleep_time)
-except:
-    set_error("Failed to set sleep state")
-# ----------------------------
+config_switch = pins[0]
+led = pins[1]
+sensor_power = pins[2]
+adc = pins[3]
+
+if config_switch.value() is 0:
+    run_config_server()
+
+config = init_config()
+
+if init_config() == False:
+    print("No configuration. Starting config server...")
+    run_config_server()
+
+if start_wifi(config, led) == False:
+    set_error("Wifi connection failed. Rebooting...")
+
+if 'ACTIVATION_CODE' in config:
+    config = get_config_from_server(config)
+
+    if config == False:
+        set_error("Failed to get config. Rebooting...")
+    else:
+        save_config(config)
+
+    config = process_activation(config)
+    if config == False:
+        set_error("Failed to activate")
+    else:
+        save_config(config)
+
+measure = get_measure(adc)
+if measure == False:
+    set_error("Failed to read data from sensor. Rebooting...")
+
+data = { "uuid": config["UUID"], "moisture": measure }
+
+print("Sending data to:", config['SERVER_ADDRESS'])
+print("Data:", data)
+
+response_data = send_measure(data)
+
+if response_data == False:
+    set_error("Failed to send data")
+else:
+    if "sleepInterval" in response_data:
+        print("Go to sleep: %s" % response_data["sleepInterval"])
+        if go_to_sleep(response_data["sleepInterval"], sensor_power) == False:
+            set_error("Failed to sleep. Rebooting...")
+        
