@@ -1,1 +1,1 @@
-pyminify boot.py > boot_min.py
+pyminify boot_src.py > boot.py
