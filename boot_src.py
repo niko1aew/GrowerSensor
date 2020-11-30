@@ -71,7 +71,7 @@ def start_wifi(config, led):
     return result
 
 def get_config_from_server(config):
-    url = config["SERVER_ADDRESS"] + "flowers/getsensorconfig?activationCode=" + config['ACTIVATION_CODE']
+    url = config["SERVER_ADDRESS"] + "api/flowers/getsensorconfig?activationCode=" + config['ACTIVATION_CODE']
 
     print("Requesting configuration...")
     print(url)
@@ -96,7 +96,7 @@ def get_config_from_server(config):
         return False
 
 def process_activation(config):
-    url = config["SERVER_ADDRESS"] + "flowers/activateflower"
+    url = config["SERVER_ADDRESS"] + "api/flowers/activateflower"
     data = { "uuid": config["UUID"], "activationCode": config['ACTIVATION_CODE'] }
 
     print("Performing activation...")
@@ -121,7 +121,7 @@ def get_measure(adc):
         return False
 
 def send_measure(data):
-    url = config["SERVER_ADDRESS"] + "flowers/registermeasure"
+    url = config["SERVER_ADDRESS"] + "api/flowers/registermeasure"
     try:
         response = urequests.post(url, data=json.dumps(data), headers=JSON_HEADERS)
         if response.status_code == 200:
