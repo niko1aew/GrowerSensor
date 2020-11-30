@@ -1,0 +1,1 @@
+esptool.py --port COM6 write_flash -fm qio 0x00000 backup.img

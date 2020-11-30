@@ -1,0 +1,1 @@
+esptool.py --port COM5 --baud 460800 read_flash 0x00000 0x400000 backup.img
