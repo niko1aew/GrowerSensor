@@ -1,1 +1,1 @@
-esptool.py --port COM%1 write_flash -fm qio 0x00000 backup.img
+esptool.py --port COM%1 write_flash -fm qio 0x00000 %2
