@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Привязка датчика</title>
+
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <script src="scripts/index.js"></script>
+  </head>
+  <body>
+    <div class="fixed-bg">
+      <div class="container">
+        <div class="jumbotron text-center">
+          <h2 class="display-4">Привязка датчика</h2>
+          <hr class="my-4" />
+          <div class="spinner">
+            <div class="loader"></div>
+            <div>Загрузка...</div>
+          </div>
+
+          <div class="error"></div>
+          <div class="text-left settings-form" style="font-size: 20px;">
+            <form
+              class="needs-validation"
+              action="http://192.168.4.1/init_settings"
+              method="POST"
+              role="form"
+            >
+              <div class="form-group">
+                <label for="serverInput">Адрес сервера</label>
+                <input
+                  type="text"
+                  name="serverUrl"
+                  value="https://flowers.nikolaev.best/api/"
+                  id="serverInput"
+                  class="form-control"
+                  required
+                  pattern="(http|https):\/\/.+?(?=\/)\/"
+                />
+                <small class="form-text text-muted"
+                  >Укажите верный адрес сервера</small
+                >
+              </div>
+              <div id="activationCodeBlock" class="form-group">
+                <label for="codeInput">Код активации</label>
+                <input
+                  id="codeInput"
+                  name="code"
+                  placeholder="Пример: 1234"
+                  class="form-control"
+                  onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                  required
+                  maxlength="4"
+                />
+                <small class="form-text text-muted"
+                  >Для получения кода необходимо предварительно создать цветок
+                  здесь flowers.nikolaev.best</small
+                >
+              </div>
+              <div for="ssidInput" class="form-group">
+                <label>Имя сети WiFi</label>
+                <input
+                  id="ssidInput"
+                  name="ssid"
+                  class="form-control"
+                  required
+                />
+                <small class="form-text text-muted"
+                  >Необходимо для подключения датчика к Интернет</small
+                >
+              </div>
+              <div for="passwordInput" class="form-group">
+                <label>Пароль сети WiFi</label>
+                <input
+                  id="passwordInput"
+                  name="password"
+                  type="password"
+                  class="form-control"
+                  required
+                />
+                <small class="form-text text-muted"
+                  >Сохраняется только внутри датчика</small
+                >
+              </div>
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  Сохранить
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  
+</html>
